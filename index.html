@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+   <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -233,7 +233,6 @@
         const todayKey = getTodayKey();
         document.getElementById('current-date').innerText = `Date: ${todayKey}`;
 
-        // Load database layers
         let db = JSON.parse(localStorage.getItem('macroTrackerDB')) || {};
         if (!db[todayKey]) {
             db[todayKey] = { calories: 0, protein: 0, carbs: 0, fat: 0, water: 0, history: [] };
@@ -242,7 +241,6 @@
 
         let recipeBook = JSON.parse(localStorage.getItem('macroTrackerRecipes')) || [];
 
-        // Hydrate API key from localStorage
         document.getElementById('api-key').value = localStorage.getItem('gemini_mac_key') || '';
 
         const toggleSettings = () => {
@@ -301,24 +299,31 @@
             }
         };
 
-        // Network Fetch Core connecting to Gemini endpoints
+        // Upgraded network handler using the newer stable gemini-2.5-flash build
         const callGeminiAPI = async (prompt, apiKey) => {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }]
-                })
-            });
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }]
+                    })
+                });
 
-            if (!response.ok) throw new Error("API communication failure. Check connection or key restrictions.");
+                if (!response.ok) {
+                    const errorDetails = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorDetails}`);
+                }
 
-            const resData = await response.json();
-            let textResponse = resData.candidates[0].content.parts[0].text.trim();
-            // Sanitize potential markdown wrappers in returned stream
-            textResponse = textResponse.replace(/^```json/, '').replace(/```$/, '').trim();
-            return JSON.parse(textResponse);
+                const resData = await response.json();
+                let textResponse = resData.candidates[0].content.parts[0].text.trim();
+                textResponse = textResponse.replace(/^```json/, '').replace(/```$/, '').trim();
+                return JSON.parse(textResponse);
+            } catch (err) {
+                throw new Error(err.message);
+            }
         };
 
         document.getElementById('ai-food-form').addEventListener('submit', async (e) => {
@@ -352,7 +357,7 @@
                 updateUI();
                 document.getElementById('food-input').value = '';
             } catch (error) {
-                alert("Error: " + error.message);
+                alert("Processing failed: " + error.message);
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerText = "Analyze & Log with Gemini";

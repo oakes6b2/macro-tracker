@@ -1,4 +1,4 @@
-   <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -99,15 +99,33 @@
         .btn-water { background-color: #3498db; }
 
         .history-list, .recipe-quick-list { list-style: none; padding: 0; margin: 0; }
+        
         .history-item {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             padding: 10px 0;
             border-bottom: 1px solid #eee;
             font-size: 0.9rem;
         }
         .history-item:last-child { border-bottom: none; }
         .history-macros, .recipe-macros { color: #666; font-size: 0.8rem; }
+        
+        .history-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .btn-delete {
+            background: none;
+            color: #e74c3c;
+            border: none;
+            padding: 4px 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            width: auto;
+        }
 
         .recipe-item {
             display: flex;
@@ -254,6 +272,13 @@
 
         const updateUI = () => {
             const data = db[todayKey];
+            
+            // Safeguard against negative balances due to deletion anomalies
+            data.calories = Math.max(0, data.calories);
+            data.protein = Math.max(0, data.protein);
+            data.carbs = Math.max(0, data.carbs);
+            data.fat = Math.max(0, data.fat);
+            
             document.getElementById('cal-val').innerText = `${data.calories}`;
             document.getElementById('pro-val').innerText = `${data.protein}g`;
             document.getElementById('carb-val').innerText = `${data.carbs}g`;
@@ -265,7 +290,7 @@
             if(data.history.length === 0) {
                 list.innerHTML = '<li style="color:#aaa; font-style:italic;">No food logged yet.</li>';
             } else {
-                data.history.forEach(item => {
+                data.history.forEach((item, index) => {
                     const li = document.createElement('li');
                     li.className = 'history-item';
                     li.innerHTML = `
@@ -273,7 +298,10 @@
                             <strong>${item.name}</strong>
                             <div class="history-macros">P: ${item.pro}g | C: ${item.carb}g | F: ${item.fat}g</div>
                         </div>
-                        <div><strong>${item.cal} kcal</strong></div>
+                        <div class="history-right">
+                            <strong>${item.cal} kcal</strong>
+                            <button class="btn-delete" onclick="deleteEntry(${index})" aria-label="Delete entry">🗑️</button>
+                        </div>
                     `;
                     list.appendChild(li);
                 });
@@ -299,7 +327,27 @@
             }
         };
 
-        // Upgraded network handler using the newer stable gemini-2.5-flash build
+        // Engine handling deletion execution and macro recalculation
+        window.deleteEntry = (index) => {
+            const data = db[todayKey];
+            const removedItem = data.history[index];
+            
+            if (!removedItem) return;
+
+            // Subtract exact macro footprints from daily totals
+            data.calories -= removedItem.cal || 0;
+            data.protein -= removedItem.pro || 0;
+            data.carbs -= removedItem.carb || 0;
+            data.fat -= removedItem.fat || 0;
+
+            // Purge the item from the localized tracking history array
+            data.history.splice(index, 1);
+
+            // Commit state update to persistent storage
+            localStorage.setItem('macroTrackerDB', JSON.stringify(db));
+            updateUI();
+        };
+
         const callGeminiAPI = async (prompt, apiKey) => {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
             

@@ -3,480 +3,446 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Macro & Hydration Tracker</title>
+    <title>MF Tracker Pro</title>
     <style>
         :root {
-            --bg-color: #f4f7f6;
-            --card-bg: #ffffff;
-            --text-color: #333333;
-            --primary: #2ecc71;
-            --accent: #9b59b6;
-            --border-radius: 12px;
+            --bg-dark: #0f1115;
+            --panel-dark: #171a21;
+            --border-dark: #242936;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --accent-orange: #ff6b35;
+            --accent-blue: #3498db;
+            --accent-green: #2ecc71;
+            --accent-purple: #a855f7;
+            --radius-lg: 16px;
+            --radius-md: 10px;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            background-color: var(--bg-dark);
+            color: var(--text-main);
             margin: 0;
-            padding: 15px;
+            padding: 0;
+            padding-bottom: 80px;
+            box-sizing: border-box;
+        }
+
+        /* App Layout & Tabs */
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 16px;
         }
 
         header {
-            text-align: center;
-            margin-bottom: 15px;
-        }
-
-        h1 { margin: 5px 0; font-size: 1.5rem; }
-        .date-sub { color: #777; font-size: 0.9rem; }
-
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .metric-card {
-            background: var(--card-bg);
-            padding: 15px;
-            border-radius: var(--border-radius);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            text-align: center;
-        }
-
-        .metric-card.full-width { grid-column: span 2; }
-        .metric-title { font-size: 0.85rem; color: #666; text-transform: uppercase; font-weight: bold; }
-        .metric-value { font-size: 1.2rem; font-weight: bold; margin: 5px 0; }
-        .metric-target { font-size: 0.75rem; color: #999; }
-
-        .section-card {
-            background: var(--card-bg);
-            padding: 15px;
-            border-radius: var(--border-radius);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-        }
-
-        h2 { font-size: 1.1rem; margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 8px; }
-
-        .form-group {
             display: flex;
-            flex-direction: column;
-            margin-bottom: 12px;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
         }
 
-        label { font-size: 0.85rem; margin-bottom: 4px; font-weight: 600; }
-        input, textarea, select {
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 1rem;
-            font-family: inherit;
+        h1 { font-size: 1.4rem; margin: 0; font-weight: 800; letter-spacing: -0.5px; }
+        .btn-settings { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-main); }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* MacroFactor Style Rings/Bars Layout */
+        .dashboard-summary {
+            background: var(--panel-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin-bottom: 16px;
         }
+
+        .expenditure-badge {
+            display: flex;
+            justify-content: space-between;
+            background: rgba(255, 107, 53, 0.1);
+            border: 1px solid rgba(255, 107, 53, 0.2);
+            padding: 10px 14px;
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+        }
+
+        .main-calorie-display {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .big-cal { font-size: 2.5rem; font-weight: 900; color: var(--text-main); margin: 0; }
+        .cal-sub { font-size: 0.85rem; color: var(--text-muted); }
+
+        .macro-progress-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .macro-bar-box {
+            background: rgba(255,255,255,0.02);
+            padding: 10px;
+            border-radius: var(--radius-md);
+            text-align: center;
+        }
+        .macro-label { font-size: 0.75rem; font-weight: bold; margin-bottom: 4px; }
+        .macro-value { font-size: 1rem; font-weight: 700; }
+        .macro-target { font-size: 0.7rem; color: var(--text-muted); }
+
+        .progress-track {
+            background: #242936;
+            height: 4px;
+            border-radius: 2px;
+            margin-top: 6px;
+            overflow: hidden;
+        }
+        .progress-fill { height: 100%; width: 0%; transition: width 0.3s ease; }
+
+        /* Panels & Cards */
+        .card {
+            background: var(--panel-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        h2 { font-size: 1.05rem; margin-top: 0; font-weight: 700; color: var(--text-main); display: flex; justify-content: space-between; }
+
+        /* Input Controls */
+        .form-group { display: flex; flex-direction: column; margin-bottom: 12px; }
+        label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; font-weight: 600; }
+        input, textarea, select {
+            background: var(--bg-dark);
+            border: 1px solid var(--border-dark);
+            color: var(--text-main);
+            padding: 12px;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+        }
+        input:focus, textarea:focus { border-color: var(--accent-orange); outline: none; }
 
         button {
-            background-color: var(--primary);
+            background: var(--accent-orange);
             color: white;
             border: none;
-            padding: 12px;
-            border-radius: 6px;
+            padding: 14px;
+            border-radius: var(--radius-md);
             font-size: 1rem;
-            font-weight: bold;
+            font-weight: 700;
             cursor: pointer;
-            width: 100%;
         }
+        button:disabled { opacity: 0.4; }
 
-        button.btn-accent { background-color: var(--accent); }
-        button:disabled { background-color: #cccccc; cursor: not-allowed; }
-        button:active { opacity: 0.9; }
-
-        .water-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-        .btn-water { background-color: #3498db; }
-
-        .history-list, .recipe-quick-list { list-style: none; padding: 0; margin: 0; }
-        
-        .history-item {
+        /* Timeline Diary List */
+        .timeline-list { list-style: none; padding: 0; margin: 0; position: relative; }
+        .timeline-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
-            font-size: 0.9rem;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-dark);
         }
-        .history-item:last-child { border-bottom: none; }
-        .history-macros, .recipe-macros { color: #666; font-size: 0.8rem; }
-        
-        .history-right {
+        .timeline-item:last-child { border-bottom: none; }
+        .item-name { font-size: 0.95rem; font-weight: 600; }
+        .item-meta { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+        .item-right { display: flex; align-items: center; gap: 12px; }
+        .btn-inline-del { background: none; border: none; color: #ef4444; cursor: pointer; padding: 4px; font-size: 1rem; }
+
+        /* Sticky Bottom Navigation Navigation Bar */
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--panel-dark);
+            border-top: 1px solid var(--border-dark);
             display: flex;
-            align-items: center;
-            gap: 12px;
+            justify-content: space-around;
+            padding: 10px 0;
+            z-index: 100;
         }
-        
-        .btn-delete {
+
+        .nav-item {
             background: none;
-            color: #e74c3c;
             border: none;
-            padding: 4px 8px;
-            font-size: 1.1rem;
-            cursor: pointer;
-            width: auto;
-        }
-
-        .recipe-item {
+            color: var(--text-muted);
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
             align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 6px 0;
+            width: 20%;
         }
-        .btn-quick-add {
-            width: auto;
-            padding: 6px 12px;
-            font-size: 0.85rem;
-            background-color: #e67e22;
-        }
+        .nav-item.active { color: var(--accent-orange); }
+        .nav-item span { font-size: 1.3rem; margin-bottom: 2px; }
 
-        .settings-toggle {
-            font-size: 0.8rem;
-            color: #3498db;
-            text-align: right;
-            cursor: pointer;
-            margin-bottom: 10px;
-        }
         .hidden { display: none; }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>🤖 AI Macro & Water Tracker</h1>
-        <div class="date-sub" id="current-date">Today</div>
-    </header>
+    <div class="app-container">
+        <header>
+            <h1 id="app-title">MacroFactor Clone</h1>
+            <button class="btn-settings" onclick="switchTab('settings')">⚙️</button>
+        </header>
 
-    <div class="settings-toggle" onclick="toggleSettings()">⚙️ Settings (API Key)</div>
-    <div id="settings-card" class="section-card hidden">
-        <h2>🔑 Gemini API Setup</h2>
-        <div class="form-group">
-            <label for="api-key">Gemini API Key</label>
-            <input type="password" id="api-key" placeholder="AIzaSy..." onchange="saveApiKey()">
-            <p style="font-size: 0.75rem; color: #666; margin-top: 5px;">Saved locally in your browser storage.</p>
-        </div>
-    </div>
-
-    <div class="metrics-grid">
-        <div class="metric-card">
-            <div class="metric-title">Calories</div>
-            <div class="metric-value" id="cal-val">0</div>
-            <div class="metric-target">Target: 2000 kcal</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-title">Protein</div>
-            <div class="metric-value" id="pro-val">0g</div>
-            <div class="metric-target">Target: 150g</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-title">Carbs</div>
-            <div class="metric-value" id="carb-val">0g</div>
-            <div class="metric-target">Target: 200g</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-title">Fat</div>
-            <div class="metric-value" id="fat-val">0g</div>
-            <div class="metric-target">Target: 65g</div>
-        </div>
-        <div class="metric-card full-width">
-            <div class="metric-title">💧 Hydration</div>
-            <div class="metric-value" id="water-val">0.0 L</div>
-            <div class="metric-target">Target: 3.0 L</div>
-        </div>
-    </div>
-
-    <div class="section-card">
-        <h2>🍳 Ask AI to Log Food</h2>
-        <form id="ai-food-form">
-            <div class="form-group">
-                <label for="food-input">What did you eat?</label>
-                <textarea id="food-input" rows="2" placeholder="e.g., 2 scrambled eggs and an avocado" required></textarea>
+        <div id="tab-dashboard" class="tab-content active">
+            <div class="expenditure-badge">
+                <span>🔥 Dynamic Expenditure:</span>
+                <strong id="expenditure-val">2,450 kcal</strong>
             </div>
-            <button type="submit" id="submit-btn">Analyze & Log with Gemini</button>
-        </form>
-    </div>
 
-    <div class="section-card">
-        <h2>📖 Save a Custom Recipe / Meal</h2>
-        <form id="recipe-form">
-            <div class="form-group">
-                <label for="recipe-name">Recipe Name</label>
-                <input type="text" id="recipe-name" placeholder="e.g., Breakfast Burrito" required>
+            <div class="dashboard-summary">
+                <div class="main-calorie-display">
+                    <div class="big-cal" id="dash-cal-remaining">2,000</div>
+                    <div class="cal-sub">Calories Remaining</div>
+                </div>
+
+                <div class="macro-progress-container">
+                    <div class="macro-bar-box">
+                        <div class="macro-label" style="color: var(--accent-green)">Protein</div>
+                        <div class="macro-value" id="dash-pro">0g</div>
+                        <div class="macro-target" id="target-pro-lbl">/ 175g</div>
+                        <div class="progress-track"><div id="fill-pro" class="progress-fill" style="background: var(--accent-green)"></div></div>
+                    </div>
+                    <div class="macro-bar-box">
+                        <div class="macro-label" style="color: var(--accent-blue)">Carbs</div>
+                        <div class="macro-value" id="dash-carb">0g</div>
+                        <div class="macro-target" id="target-carb-lbl">/ 180g</div>
+                        <div class="progress-track"><div id="fill-carb" class="progress-fill" style="background: var(--accent-blue)"></div></div>
+                    </div>
+                    <div class="macro-bar-box">
+                        <div class="macro-label" style="color: var(--accent-purple)">Fat</div>
+                        <div class="macro-value" id="dash-fat">0g</div>
+                        <div class="macro-target" id="target-fat-lbl">/ 65g</div>
+                        <div class="progress-track"><div id="fill-fat" class="progress-fill" style="background: var(--accent-purple)"></div></div>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="recipe-ingredients">Ingredients / Quantities</label>
-                <textarea id="recipe-ingredients" rows="3" placeholder="e.g., 1 flour tortilla, 3 large eggs, 50g shredded cheddar cheese, 2 bacon strips" required></textarea>
+
+            <div class="card">
+                <h2>Timeline Diary <span>🕒</span></h2>
+                <ul id="timeline-log" class="timeline-list"></ul>
             </div>
-            <button type="submit" id="recipe-btn" class="btn-accent">Analyze & Save Recipe</button>
-        </form>
-    </div>
+        </div>
 
-    <div class="section-card">
-        <h2>⚡ Quick Log Saved Recipes</h2>
-        <ul class="recipe-quick-list" id="recipe-quick-list">
-            </ul>
-    </div>
+        <div id="tab-log" class="tab-content">
+            <div class="card">
+                <h2>Conversational AI Logger</h2>
+                <form id="ai-logger-form">
+                    <div class="form-group">
+                        <label>Describe your meal in plain English</label>
+                        <textarea id="ai-raw-input" rows="3" placeholder="Example: 8oz grilled ribeye steak with a tablespoon of grass-fed butter and a side of white rice" required></textarea>
+                    </div>
+                    <button type="submit" id="ai-log-btn">Process & Commit to Timeline</button>
+                </form>
+            </div>
 
-    <div class="section-card">
-        <h2>💧 Log Water</h2>
-        <div class="water-buttons">
-            <button class="btn-water" onclick="addWater(0.25)">+ 250ml</button>
-            <button class="btn-water" onclick="addWater(0.5)">+ 500ml</button>
+            <div class="card">
+                <h2>Quick Hydration</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <button style="background: var(--accent-blue)" onclick="addWater(0.25)">+ 250ml</button>
+                    <button style="background: var(--accent-blue)" onclick="addWater(0.50)">+ 500ml</button>
+                </div>
+                <div style="text-align: center; margin-top: 12px; font-weight: bold;" id="water-display">Logged: 0.00 L</div>
+            </div>
+        </div>
+
+        <div id="tab-weight" class="tab-content">
+            <div class="card">
+                <h2>Log Daily Weight</h2>
+                <form id="weight-form">
+                    <div class="form-group">
+                        <label>Current Weight (lbs)</label>
+                        <input type="number" id="weight-input" step="0.1" placeholder="e.g. 185.4" required>
+                    </div>
+                    <button type="submit" style="background: var(--accent-purple)">Save Weight Entry</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>Weight Registry</h2>
+                <ul id="weight-history-list" class="timeline-list"></ul>
+            </div>
+        </div>
+
+        <div id="tab-recipes" class="tab-content">
+            <div class="card">
+                <h2>Construct Custom Recipe</h2>
+                <form id="recipe-build-form">
+                    <div class="form-group">
+                        <label>Recipe Name</label>
+                        <input type="text" id="rec-name-input" placeholder="e.g. Clean Chili" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Ingredients & Quantities</label>
+                        <textarea id="rec-ing-input" rows="3" placeholder="e.g. 1lb grass-fed ground beef, 1 can kidney beans, 1 onion" required></textarea>
+                    </div>
+                    <button type="submit" style="background: var(--accent-green)">Analyze & Index Recipe</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>Indexed Recipes</h2>
+                <ul id="indexed-recipes-list" class="timeline-list"></ul>
+            </div>
+        </div>
+
+        <div id="tab-settings" class="tab-content">
+            <div class="card">
+                <h2>Security Credentials</h2>
+                <div class="form-group">
+                    <label>Gemini API Key</label>
+                    <input type="password" id="api-key-input" onchange="saveConfig()" placeholder="AIzaSy...">
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Macro Target Configuration</h2>
+                <div class="form-group"><label>Target Calories</label><input type="number" id="cfg-cal" value="2000" onchange="saveConfig()"></div>
+                <div class="form-group"><label>Target Protein (g)</label><input type="number" id="cfg-pro" value="175" onchange="saveConfig()"></div>
+                <div class="form-group"><label>Target Carbs (g)</label><input type="number" id="cfg-carb" value="180" onchange="saveConfig()"></div>
+                <div class="form-group"><label>Target Fat (g)</label><input type="number" id="cfg-fat" value="65" onchange="saveConfig()"></div>
+            </div>
         </div>
     </div>
 
-    <div class="section-card">
-        <h2>📝 Today's Log</h2>
-        <ul class="history-list" id="history-list">
-            </ul>
-    </div>
+    <nav class="nav-bar">
+        <button class="nav-item active" onclick="switchTab('dashboard')"><span>📊</span>Dashboard</button>
+        <button class="nav-item" onclick="switchTab('log')"><span>🍳</span>Log Food</button>
+        <button class="nav-item" onclick="switchTab('weight')"><span>⚖️</span>Scale</button>
+        <button class="nav-item" onclick="switchTab('recipes')"><span>📖</span>Recipes</button>
+    </nav>
 
     <script>
-        const getTodayKey = () => {
+        const getIsoDate = () => {
             const d = new Date();
             return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         };
 
-        const todayKey = getTodayKey();
-        document.getElementById('current-date').innerText = `Date: ${todayKey}`;
+        const today = getIsoDate();
 
-        let db = JSON.parse(localStorage.getItem('macroTrackerDB')) || {};
-        if (!db[todayKey]) {
-            db[todayKey] = { calories: 0, protein: 0, carbs: 0, fat: 0, water: 0, history: [] };
-            localStorage.setItem('macroTrackerDB', JSON.stringify(db));
+        // Local Database Schema hydration
+        let appState = JSON.parse(localStorage.getItem('mfTrackerState')) || {
+            config: { apiKey: '', cal: 2000, pro: 175, carb: 180, fat: 65 },
+            diary: {},
+            weightLog: {},
+            recipes: []
+        };
+
+        if(!appState.diary[today]) {
+            appState.diary[today] = { cal: 0, pro: 0, carb: 0, fat: 0, water: 0, items: [] };
         }
 
-        let recipeBook = JSON.parse(localStorage.getItem('macroTrackerRecipes')) || [];
+        // Initialize Settings Fields
+        document.getElementById('api-key-input').value = appState.config.apiKey || '';
+        document.getElementById('cfg-cal').value = appState.config.cal;
+        document.getElementById('cfg-pro').value = appState.config.pro;
+        document.getElementById('cfg-carb').value = appState.config.carb;
+        document.getElementById('cfg-fat').value = appState.config.fat;
 
-        document.getElementById('api-key').value = localStorage.getItem('gemini_mac_key') || '';
-
-        const toggleSettings = () => {
-            document.getElementById('settings-card').classList.toggle('hidden');
-        };
-
-        const saveApiKey = () => {
-            const key = document.getElementById('api-key').value.trim();
-            localStorage.setItem('gemini_mac_key', key);
-        };
-
-        const updateUI = () => {
-            const data = db[todayKey];
+        const switchTab = (tabId) => {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             
-            // Safeguard against negative balances due to deletion anomalies
-            data.calories = Math.max(0, data.calories);
-            data.protein = Math.max(0, data.protein);
-            data.carbs = Math.max(0, data.carbs);
-            data.fat = Math.max(0, data.fat);
+            document.getElementById(`tab-${tabId}`).classList.add('active');
             
-            document.getElementById('cal-val').innerText = `${data.calories}`;
-            document.getElementById('pro-val').innerText = `${data.protein}g`;
-            document.getElementById('carb-val').innerText = `${data.carbs}g`;
-            document.getElementById('fat-val').innerText = `${data.fat}g`;
-            document.getElementById('water-val').innerText = `${data.water.toFixed(2)} L`;
-
-            const list = document.getElementById('history-list');
-            list.innerHTML = '';
-            if(data.history.length === 0) {
-                list.innerHTML = '<li style="color:#aaa; font-style:italic;">No food logged yet.</li>';
-            } else {
-                data.history.forEach((item, index) => {
-                    const li = document.createElement('li');
-                    li.className = 'history-item';
-                    li.innerHTML = `
-                        <div>
-                            <strong>${item.name}</strong>
-                            <div class="history-macros">P: ${item.pro}g | C: ${item.carb}g | F: ${item.fat}g</div>
-                        </div>
-                        <div class="history-right">
-                            <strong>${item.cal} kcal</strong>
-                            <button class="btn-delete" onclick="deleteEntry(${index})" aria-label="Delete entry">🗑️</button>
-                        </div>
-                    `;
-                    list.appendChild(li);
-                });
-            }
-
-            const recipeList = document.getElementById('recipe-quick-list');
-            recipeList.innerHTML = '';
-            if(recipeBook.length === 0) {
-                recipeList.innerHTML = '<li style="color:#aaa; font-style:italic;">No saved recipes yet.</li>';
-            } else {
-                recipeBook.forEach((recipe, index) => {
-                    const li = document.createElement('li');
-                    li.className = 'recipe-item';
-                    li.innerHTML = `
-                        <div>
-                            <strong>${recipe.name}</strong>
-                            <div class="recipe-macros">${recipe.cal} kcal | P: ${recipe.pro}g | C: ${recipe.carb}g | F: ${recipe.fat}g</div>
-                        </div>
-                        <button class="btn-quick-add" onclick="logSavedRecipe(${index})">＋ Log</button>
-                    `;
-                    recipeList.appendChild(li);
-                });
-            }
+            // Highlight matching nav item button if not hidden settings panel
+            const buttons = document.querySelectorAll('.nav-bar button');
+            if(tabId === 'dashboard') buttons[0].classList.add('active');
+            if(tabId === 'log') buttons[1].classList.add('active');
+            if(tabId === 'weight') buttons[2].classList.add('active');
+            if(tabId === 'recipes') buttons[3].classList.add('active');
         };
 
-        // Engine handling deletion execution and macro recalculation
-        window.deleteEntry = (index) => {
-            const data = db[todayKey];
-            const removedItem = data.history[index];
-            
-            if (!removedItem) return;
-
-            // Subtract exact macro footprints from daily totals
-            data.calories -= removedItem.cal || 0;
-            data.protein -= removedItem.pro || 0;
-            data.carbs -= removedItem.carb || 0;
-            data.fat -= removedItem.fat || 0;
-
-            // Purge the item from the localized tracking history array
-            data.history.splice(index, 1);
-
-            // Commit state update to persistent storage
-            localStorage.setItem('macroTrackerDB', JSON.stringify(db));
-            updateUI();
+        const saveConfig = () => {
+            appState.config.apiKey = document.getElementById('api-key-input').value.trim();
+            appState.config.cal = parseInt(document.getElementById('cfg-cal').value) || 2000;
+            appState.config.pro = parseInt(document.getElementById('cfg-pro').value) || 175;
+            appState.config.carb = parseInt(document.getElementById('cfg-carb').value) || 180;
+            appState.config.fat = parseInt(document.getElementById('cfg-fat').value) || 65;
+            localStorage.setItem('mfTrackerState', JSON.stringify(appState));
+            updateEngineUI();
         };
 
-        const callGeminiAPI = async (prompt, apiKey) => {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-            
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }]
-                    })
-                });
+        // Algorithmic MacroFactor Core: Expenditure TDEE Engine Calculation
+        const computeDynamicExpenditure = () => {
+            const weights = Object.entries(appState.weightLog).sort((a,b) => new Date(b[0]) - new Date(a[0]));
+            if(weights.length < 2) return appState.config.cal; // Fallback to baseline setup
 
-                if (!response.ok) {
-                    const errorDetails = await response.text();
-                    throw new Error(`HTTP ${response.status}: ${errorDetails}`);
-                }
+            // Calculate trailing data up to 7 entries
+            let weightDelta = 0;
+            let dayCount = 0;
+            let calorieSum = 0;
 
-                const resData = await response.json();
-                let textResponse = resData.candidates[0].content.parts[0].text.trim();
-                textResponse = textResponse.replace(/^```json/, '').replace(/```$/, '').trim();
-                return JSON.parse(textResponse);
-            } catch (err) {
-                throw new Error(err.message);
+            const trackingWindow = weights.slice(0, 7);
+            if(trackingWindow.length >= 2) {
+                const latest = trackingWindow[0][1];
+                const oldest = trackingWindow[trackingWindow.length - 1][1];
+                weightDelta = latest - oldest; 
+                dayCount = (new Date(trackingWindow[0][0]) - new Date(trackingWindow[trackingWindow.length - 1][0])) / (1000 * 60 * 60 * 24) || 1;
             }
-        };
 
-        document.getElementById('ai-food-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const foodText = document.getElementById('food-input').value;
-            const apiKey = localStorage.getItem('gemini_mac_key');
-            const submitBtn = document.getElementById('submit-btn');
-
-            if (!apiKey) return alert("Please set your Gemini API key in settings first!");
-
-            try {
-                submitBtn.disabled = true;
-                submitBtn.innerText = "Analyzing...";
-
-                const prompt = `Analyze the food description: "${foodText}". Respond ONLY with a valid JSON object matching this structure exactly, do not wrap it in markdown code blocks: {"name": "Short food description", "cal": 0, "pro": 0, "carb": 0, "fat": 0}`;
-                const parsedData = await callGeminiAPI(prompt, apiKey);
-
-                db[todayKey].calories += parsedData.cal || 0;
-                db[todayKey].protein += parsedData.pro || 0;
-                db[todayKey].carbs += parsedData.carb || 0;
-                db[todayKey].fat += parsedData.fat || 0;
-                db[todayKey].history.push({
-                    name: parsedData.name || foodText,
-                    cal: parsedData.cal || 0,
-                    pro: parsedData.pro || 0,
-                    carb: parsedData.carb || 0,
-                    fat: parsedData.fat || 0
-                });
-
-                localStorage.setItem('macroTrackerDB', JSON.stringify(db));
-                updateUI();
-                document.getElementById('food-input').value = '';
-            } catch (error) {
-                alert("Processing failed: " + error.message);
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerText = "Analyze & Log with Gemini";
-            }
-        });
-
-        document.getElementById('recipe-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const name = document.getElementById('recipe-name').value.trim();
-            const ingredients = document.getElementById('recipe-ingredients').value;
-            const apiKey = localStorage.getItem('gemini_mac_key');
-            const recipeBtn = document.getElementById('recipe-btn');
-
-            if (!apiKey) return alert("Please set your Gemini API key in settings first!");
-
-            try {
-                recipeBtn.disabled = true;
-                recipeBtn.innerText = "Calculating recipe macros...";
-
-                const prompt = `Analyze the collective components of this custom recipe: "${ingredients}". Estimate total combined macronutrients. Respond ONLY with a valid JSON object matching this structure exactly, do not wrap it in markdown: {"cal": 0, "pro": 0, "carb": 0, "fat": 0}`;
-                const parsedMacros = await callGeminiAPI(prompt, apiKey);
-
-                recipeBook.push({
-                    name: name,
-                    cal: parsedMacros.cal || 0,
-                    pro: parsedMacros.pro || 0,
-                    carb: parsedMacros.carb || 0,
-                    fat: parsedMacros.fat || 0
-                });
-
-                localStorage.setItem('macroTrackerRecipes', JSON.stringify(recipeBook));
-                updateUI();
-
-                document.getElementById('recipe-name').value = '';
-                document.getElementById('recipe-ingredients').value = '';
-                alert(`"${name}" successfully calculated and saved to your recipe book!`);
-            } catch (error) {
-                alert("Recipe processing failed: " + error.message);
-            } finally {
-                recipeBtn.disabled = false;
-                recipeBtn.innerText = "Analyze & Save Recipe";
-            }
-        });
-
-        window.logSavedRecipe = (index) => {
-            const recipe = recipeBook[index];
-            if (!recipe) return;
-
-            db[todayKey].calories += recipe.cal;
-            db[todayKey].protein += recipe.pro;
-            db[todayKey].carbs += recipe.carb;
-            db[todayKey].fat += recipe.fat;
-            db[todayKey].history.push({
-                name: recipe.name,
-                cal: recipe.cal,
-                pro: recipe.pro,
-                carb: recipe.carb,
-                fat: recipe.fat
+            // Loop and grab total real calories consumed in this specific span
+            trackingWindow.forEach(w => {
+                if(appState.diary[w[0]]) calorieSum += appState.diary[w[0]].cal;
+                else calorieSum += appState.config.cal; // assume baseline targets if empty
             });
 
-            localStorage.setItem('macroTrackerDB', JSON.stringify(db));
-            updateUI();
+            const avgDailyCalIn = calorieSum / (trackingWindow.length || 1);
+            // 1 lb tissue mass change calculation ~ 3500 kcal
+            const dailyWeightCalorieImpact = (weightDelta * 3500) / dayCount;
+            
+            // Expenditure = Calories In - (Weight Gain Calories Impact)
+            const calculatedTdee = Math.round(avgDailyCalIn - dailyWeightCalorieImpact);
+            return isNaN(calculatedTdee) ? appState.config.cal : Math.max(1200, calculatedTdee);
         };
 
-        window.addWater = (amount) => {
-            db[todayKey].water += amount;
-            localStorage.setItem('macroTrackerDB', JSON.stringify(db));
-            updateUI();
-        };
+        const updateEngineUI = () => {
+            const logData = appState.diary[today];
+            const cfg = appState.config;
 
-        updateUI();
-    </script>
-</body>
-</html>
+            // Compute dynamic metrics
+            const currentExpenditure = computeDynamicExpenditure();
+            document.getElementById('expenditure-val').innerText = `${currentExpenditure.toLocaleString()} kcal`;
+
+            // Calculate remaining targets cleanly
+            const remCal = cfg.cal - logData.cal;
+            document.getElementById('dash-cal-remaining').innerText = `${remCal}`;
+            document.getElementById('app-title').innerText = remCal >= 0 ? `Remaining: ${remCal} kcal` : `Overby: ${Math.abs(remCal)} kcal`;
+
+            // Hydrate display metrics
+            document.getElementById('dash-pro').innerText = `${logData.pro}g`;
+            document.getElementById('target-pro-lbl').innerText = `/ ${cfg.pro}g`;
+            document.getElementById('fill-pro').style.width = `${Math.min(100, (logData.pro / cfg.pro) * 100)}%`;
+
+            document.getElementById('dash-carb').innerText = `${logData.carb}g`;
+            document.getElementById('target-carb-lbl').innerText = `/ ${cfg.carb}g`;
+            document.getElementById('fill-carb').style.width = `${Math.min(100, (logData.carb / cfg.carb) * 100)}%`;
+
+            document.getElementById('dash-fat').innerText = `${logData.fat}g`;
+            document.getElementById('target-fat-lbl').innerText = `/ ${cfg.fat}g`;
+            document.getElementById('fill-fat').style.width = `${Math.min(100, (logData.fat / cfg.fat) * 100)}%`;
+
+            document.getElementById('water-display').innerText = `Logged: ${logData.water.toFixed(2)} L`;
+
+            // Chronological Diary Engine UI rendering
+            const diaryContainer = document.getElementById('timeline-log');
+            diaryContainer.innerHTML = '';
+            if(logData.items.length === 0) {
+                diaryContainer.innerHTML = `<li style="color: var(--text-muted); font-style: italic; font-size: 0.85rem; text-align:center; padding: 20px 0;">Timeline Empty. Go track food!</li>`;
+            } else {
+                logData.items.forEach((item, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'timeline-item';
+                    li.innerHTML = `
+                        <div>
+                            <div class="item-name">${item.name}</div>
+                            <div class="item-meta">P: ${item.pro}g  |  C: ${item.carb}g  |  F: ${item.fat}g</div>
+                        </div>
+                        <
